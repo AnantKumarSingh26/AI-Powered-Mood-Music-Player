@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const baseURL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
+
 const api = axios.create({
-    baseURL: "http://localhost:3000/",
+    baseURL: baseURL,
     withCredentials: true,
 });
 
