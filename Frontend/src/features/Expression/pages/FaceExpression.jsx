@@ -9,6 +9,7 @@ export default function FaceExpression() {
     const videoRef = useRef(null);
     const landmarkerRef = useRef(null);
     const streamRef = useRef(null);
+    const lastMoodRef = useRef(null); // Prevents repeat API calls
 
     const [expression, setExpression] = useState("Detecting...");
     const [autoScan, setAutoScan] = useState(false);
@@ -33,12 +34,14 @@ export default function FaceExpression() {
         };
     }, []);
 
-    // Manual or Auto Expression Detection handler
+    // Safe detection trigger with ReadyState check
     const runDetection = () => {
-        detect({ landmarkerRef, videoRef, setExpression });
+        if (videoRef.current && videoRef.current.readyState >= 2) {
+            detect({ landmarkerRef, videoRef, setExpression });
+        }
     };
 
-    // Auto-fetch song when detected expression changes to a valid mood
+    // Auto-fetch song when detected expression changes to a NEW valid mood
     useEffect(() => {
         let mood = null;
         if (expression.includes("Happy")) mood = "happy";
@@ -46,10 +49,11 @@ export default function FaceExpression() {
         else if (expression.includes("Surprised")) mood = "surprised";
         else if (expression.includes("Neutral")) mood = "neutral";
 
-        if (mood) {
+        if (mood && mood !== lastMoodRef.current) {
+            lastMoodRef.current = mood;
             handleGetSong({ mood });
         }
-    }, [expression]);
+    }, [expression, handleGetSong]);
 
     // Continuous auto-scan loop if enabled
     useEffect(() => {
@@ -110,7 +114,8 @@ export default function FaceExpression() {
                     </div>
 
                     <div className="video-wrapper">
-                        <video ref={videoRef} playsInline />
+                        {/* AutoPlay, PlaysInline, and Muted attributes added for webRTC support */}
+                        <video ref={videoRef} autoPlay playsInline muted />
                         <div className="hud-scanner">
                             <div className="corner top-left"></div>
                             <div className="corner top-right"></div>
